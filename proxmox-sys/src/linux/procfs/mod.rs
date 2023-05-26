@@ -318,6 +318,20 @@ fn parse_proc_stat_cpu_line<'a>(
             .map_err(|e| format_err!("error parsing {}: {}", what, e))
     }
 
+    fn opt_num<T>(value: Option<&str>, what: &'static str) -> Result<T, Error>
+    where
+        T: FromStr,
+        <T as FromStr>::Err: std::fmt::Display,
+    {
+        let matched_value = match value {
+            Some(v) => v,
+            None => "0",
+        };
+
+        matched_value.parse::<T>()
+            .map_err(|e| format_err!("error parsing {}: {}", what, e))
+    }
+
     let mut stat = ProcFsStat {
         user: req_num::<u64>(parts.next(), "user")?,
         nice: req_num::<u64>(parts.next(), "nice")?,
@@ -327,8 +341,8 @@ fn parse_proc_stat_cpu_line<'a>(
         irq: req_num::<u64>(parts.next(), "irq")?,
         softirq: req_num::<u64>(parts.next(), "softirq")?,
         steal: req_num::<u64>(parts.next(), "steal")?,
-        guest: req_num::<u64>(parts.next(), "guest")?,
-        guest_nice: req_num::<u64>(parts.next(), "guest_nice")?,
+        guest: opt_num::<u64>(parts.next(), "guest")?,
+        guest_nice: opt_num::<u64>(parts.next(), "guest_nice")?,
         total: 0,
         cpu: 0.0,
         cpu_count: 0,
